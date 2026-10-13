@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>法說會旁白票選</title>
+<style>
+  /* Layout: one centered column — sample script, then male and female voice lists, sticky pick summary at the bottom */
+  :root {
+    --bg: #F6F4EF; --surface: #FFFFFF; --fg: #3A3A3A; --muted: #7C8279;
+    --brand: #233D1F; --on-brand: #FFFFFF; --gold: #DCBC87; --gold-text: #9A7B3F;
+    --line: #E5E0D8; --picked: #EEF3ED;
+    --font-body: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141A13; --surface: #1D251C; --fg: #E8E6E0; --muted: #9DA59A;
+      --brand: #2F5229; --on-brand: #FFFFFF; --gold: #DCBC87; --gold-text: #DCBC87;
+      --line: #2E382D; --picked: #24331F; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141A13; --surface: #1D251C; --fg: #E8E6E0; --muted: #9DA59A;
+    --brand: #2F5229; --on-brand: #FFFFFF; --gold: #DCBC87; --gold-text: #DCBC87;
+    --line: #2E382D; --picked: #24331F; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0 40px; }
+  .wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  header { background: var(--brand); color: var(--on-brand); margin-inline: -16px; padding: 32px 20px 26px; text-align: center; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; text-wrap: balance; }
+  header p { margin: 8px auto 0; max-width: 520px; font-size: 15px; opacity: .9; }
+  .script { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; font-size: 17px; }
+  .script b { display: block; color: var(--gold-text); font-size: 13px; letter-spacing: 1px; margin-bottom: 2px; }
+  h2 { font-size: 17px; color: var(--fg); margin: 8px 0 0; }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .card.on { border-color: var(--brand); background: var(--picked); }
+  .code { flex: none; width: 54px; height: 54px; border-radius: 50%; background: var(--brand); color: var(--gold); font-size: 20px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .info { flex: 1; min-width: 0; }
+  .info b { display: block; font-size: 17px; }
+  .info small { color: var(--muted); font-size: 14px; }
+  button { font-family: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .play { flex: none; width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--gold); display: flex; align-items: center; justify-content: center; }
+  .play svg { width: 18px; height: 18px; fill: #233D1F; }
+  .pick { flex: none; border: 2px solid var(--brand); background: transparent; color: var(--fg); border-radius: 22px; padding: 7px 14px; font-size: 15px; font-weight: 700; }
+  .card.on .pick { background: var(--brand); color: var(--on-brand); }
+  #result { position: sticky; bottom: env(safe-area-inset-bottom, 0px); background: var(--brand); color: var(--on-brand); border-radius: 14px; padding: 14px 16px; text-align: center; font-size: 16px; }
+  #result strong { color: var(--gold); font-size: 22px; margin: 0 4px; }
+  .note { color: var(--muted); font-size: 13px; text-align: center; }
+  @media (max-width: 460px) {
+    .card { flex-wrap: wrap; }
+    .info { flex-basis: calc(100% - 136px); }
+    .pick { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>法說會旁白票選</h1>
+  <p>每個聲音唸的都是同一段話。按播放聽聽看，男聲、女聲各選一個你最喜歡的。</p>
+</header>
+<div class="wrap">
+  <div class="script"><b>試聽台詞</b>醫美難的不是療程，是經營。所以，我們蓋了一座 AI 數據中台。AI 先做第一輪，最後由專業的人把關。</div>
+  <h2>男聲</h2>
+  <div class="list" id="male"></div>
+  <h2>女聲</h2>
+  <div class="list" id="female"></div>
+  <div id="result" hidden>你選的是<strong id="rm">—</strong>和<strong id="rf">—</strong>，請把這兩個代號傳給 Vivi</div>
+  <p class="note">聲音為 AI 合成</p>
+</div>
+
+<script>
+  var voices = [
+    { code: "A1", g: "male", name: "新聞播報", desc: "穩重、咬字清楚" },
+    { code: "A2", g: "male", name: "低沉渾厚", desc: "聲音厚、有信任感" },
+    { code: "A3", g: "male", name: "低沉權威", desc: "沉穩、有份量" },
+    { code: "A4", g: "male", name: "電台主持", desc: "有自信、比較有活力" },
+    { code: "A5", g: "female", name: "新聞主播", desc: "咬字清楚、專業" },
+    { code: "A6", g: "female", name: "清楚自然", desc: "親切、有信任感" },
+    { code: "A7", g: "female", name: "沉穩", desc: "穩定、踏實" }
+  ];
+  var picked = { male: null, female: null };
+  var playIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 L20 12 L7 20 Z"/></svg>';
+  var pauseIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
+  var current = null, currentBtn = null;
+
+  voices.forEach(function (v) {
+    var card = document.createElement("div");
+    card.className = "card";
+    card.id = "card-" + v.code;
+    card.innerHTML = '<div class="code">' + v.code + '</div>' +
+      '<div class="info"><b>' + v.name + '</b><small>' + v.desc + '</small></div>' +
+      '<button class="play" aria-label="播放 ' + v.code + '">' + playIcon + '</button>' +
+      '<button class="pick">選這個</button>';
+    var audio = new Audio("audio/" + v.code + ".mp3");
+    audio.preload = "none";
+    var playBtn = card.querySelector(".play");
+    playBtn.addEventListener("click", function () {
+      if (current && current !== audio) { current.pause(); current.currentTime = 0; currentBtn.innerHTML = playIcon; }
+      if (audio.paused) { audio.play(); playBtn.innerHTML = pauseIcon; current = audio; currentBtn = playBtn; }
+      else { audio.pause(); playBtn.innerHTML = playIcon; }
+    });
+    audio.addEventListener("ended", function () { playBtn.innerHTML = playIcon; });
+    card.querySelector(".pick").addEventListener("click", function () {
+      voices.forEach(function (o) {
+        if (o.g === v.g) document.getElementById("card-" + o.code).classList.remove("on");
+      });
+      card.classList.add("on");
+      picked[v.g] = v.code;
+      document.getElementById("rm").textContent = picked.male || "—";
+      document.getElementById("rf").textContent = picked.female || "—";
+      document.getElementById("result").hidden = false;
+    });
+    document.getElementById(v.g).appendChild(card);
+  });
+</script>
+</body>
+</html>
